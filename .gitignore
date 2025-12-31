@@ -1,0 +1,8 @@
+venv/
+__pycache__/
+*.pyc
+.DS_Store
+data/hidden_test_labels.csv
+data/test_labels.csv
+submissions/
+!submissions/sample_submission.csv

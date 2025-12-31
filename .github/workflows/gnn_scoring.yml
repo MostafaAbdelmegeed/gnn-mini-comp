@@ -1,0 +1,77 @@
+name: GNN Challenge Scoring
+
+on:
+  pull_request:
+    paths:
+      - 'submissions/*.csv'
+  push:
+    paths:
+      - 'submissions/*.csv'
+
+jobs:
+  score-submission:
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write
+      pull-requests: write
+
+    steps:
+    - uses: actions/checkout@v3
+
+    - name: Set up Python
+      uses: actions/setup-python@v4
+      with:
+        python-version: '3.10'
+
+    - name: Install dependencies
+      run: |
+        pip install -r starter_code/requirements.txt
+
+    - name: Run Scoring & Update Leaderboard (Push Only)
+      if: github.event_name == 'push'
+      run: |
+        python update_leaderboard.py
+        
+        # Commit Leaderboard if changed
+        git config --global user.name 'github-actions[bot]'
+        git config --global user.email 'github-actions[bot]@users.noreply.github.com'
+        git add LEADERBOARD.md
+        git diff --quiet && git diff --staged --quiet || git commit -m "Update Leaderboard"
+        git push
+
+    - name: Score PR Submission
+      if: github.event_name == 'pull_request'
+      id: score_pr
+      run: |
+        # Identify the changed file
+        # This simple logic assumes 1 file changed for simplicity in this demo
+        # A more robust script would iterate over changed files exposed by git diff
+        CHANGED_FILE=$(git diff --name-only origin/main -- submissions/ | head -n 1)
+        
+        if [ -z "$CHANGED_FILE" ]; then
+          echo "No submission file found."
+          exit 0
+        fi
+
+        echo "Scoring $CHANGED_FILE..."
+        # Run scoring script and capture output
+        OUTPUT=$(python scoring_script.py "$CHANGED_FILE" 2>&1)
+        SCORE=$(echo "$OUTPUT" | grep "FINAL SCORE" | awk '{print $4}')
+        
+        echo "::set-output name=score::$SCORE"
+        echo "::set-output name=message::$OUTPUT"
+
+    - name: Comment on PR
+      if: github.event_name == 'pull_request' && steps.score_pr.outputs.score != ''
+      uses: actions/github-script@v6
+      with:
+        script: |
+          const score = '${{ steps.score_pr.outputs.score }}';
+          const message = '${{ steps.score_pr.outputs.message }}';
+          
+          github.rest.issues.createComment({
+            issue_number: context.issue.number,
+            owner: context.repo.owner,
+            repo: context.repo.repo,
+            body: `### Submission Result 🚀\n\n**Macro F1 Score:** ${score}\n\n<details><summary>Full Output</summary>\n\n\`\`\`\n${message}\n\`\`\`\n</details>`
+          })
