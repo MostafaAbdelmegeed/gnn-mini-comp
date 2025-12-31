@@ -7,12 +7,17 @@ import os
 # Ensure data directory exists
 os.makedirs('data', exist_ok=True)
 
-def generate_graph_data(n_samples=2000, n_features=50, n_classes=3, seed=42):
+def generate_graph_data(n_samples=2000, n_features=50, n_classes=3, seed=None):
     """
     Generates a graph using Stochastic Block Model (SBM) to ensure strong homophily.
     Node features are noisy versions of the class center, making structure crucial.
     """
-    print(f"Generating graph data (SBM) with {n_samples} nodes...")
+    if seed is None:
+        seed = int(os.environ.get('GNN_CHALLENGE_SEED', 42))
+        if 'GNN_CHALLENGE_SEED' not in os.environ:
+            print("WARNING: Using default seed 42. This data will NOT match the official leaderboard!")
+    
+    print(f"Generating graph data (SBM) with {n_samples} nodes (Seed: {seed})...")
     np.random.seed(seed)
     
     # 1. Define SBM Parameters

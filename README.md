@@ -21,6 +21,8 @@ While the data is provided in CSV format (nodes with features), it implies a gra
    source venv/bin/activate
    ```
 
+   **Note**: Do NOT run `data/generate_data.py` unless you want to explore data generation. Doing so will overwrite the official competition data with the default local seed (42), making your checks against `test` invalid. If this happens, `git checkout data/` to restore.
+
 2. **Install Dependencies**:
    ```bash
    pip install -r starter_code/requirements.txt

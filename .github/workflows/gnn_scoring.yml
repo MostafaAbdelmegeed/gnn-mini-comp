@@ -27,6 +27,12 @@ jobs:
       run: |
         pip install -r starter_code/requirements.txt
 
+    - name: Regenerate Ground Truth
+      env:
+        GNN_CHALLENGE_SEED: ${{ secrets.GNN_CHALLENGE_SEED }}
+      run: |
+        python data/generate_data.py
+
     - name: Run Scoring & Update Leaderboard (Push Only)
       if: github.event_name == 'push'
       run: |
