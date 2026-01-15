@@ -1,6 +1,7 @@
 import pandas as pd
 import os
 import glob
+import json
 from scoring_script import score_submission
 from datetime import datetime
 
@@ -45,7 +46,11 @@ def update_leaderboard():
         f.write("# GNN Challenge Leaderboard\n\n")
         f.write(markdown_table)
     
-    print("LEADERBOARD.md updated.")
+    # Export to JSON for Web Leaderboard
+    with open('leaderboard.json', 'w') as f:
+        json.dump(results, f, indent=4)
+
+    print("LEADERBOARD.md and leaderboard.json updated.")
 
 if __name__ == "__main__":
     update_leaderboard()
