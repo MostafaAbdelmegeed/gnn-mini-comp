@@ -1,118 +1,66 @@
-# 🏆 GNN Rising Stars: Node Classification Challenge
+# GNN Rising Stars
 
-![Python](https://img.shields.io/badge/Python-3.8%2B-blue)
-![PyTorch](https://img.shields.io/badge/PyTorch-Geometric-orange)
-![Status](https://img.shields.io/badge/Status-Active-success)
-![Leaderboard](https://img.shields.io/badge/Leaderboard-Live-gold)
+A node-classification teaching challenge on a synthetic graph. Compare a feature-only Random Forest with a graph convolutional network, then submit predictions for automated scoring.
 
-Welcome to the **GNN Rising Stars Mini-Competition**! Your mission is to master graph-based learning by outperforming standard baselines on a challenging synthetic dataset.
+The repository includes the public node features and edges, starter baselines, a scoring script, and a leaderboard workflow.
 
----
+## The task
 
-## 📑 Table of Contents
-- [Overview](#-overview)
-- [The Challenge](#-the-challenge)
-- [Dataset](#-dataset)
-- [Leaderboard](#-leaderboard)
-- [Getting Started](#-getting-started)
-- [Submission Guide](#-submission-guide)
-- [Rules](#-rules)
+Predict `target` for the nodes in `data/test.csv`. The graph comes from a stochastic block model with noisy node features and stronger connections within classes.
 
----
-
-## 🎯 Overview
-This competition is designed to test your ability to leverage **structural information** in data. While tabular models (Random Forest, XGBoost) treat each data point in isolation, **Graph Neural Networks (GNNs)** use the connections between points to learn richer representations.
-
-**Your Goal:** Achieve the highest **Macro F1 Score** on the hidden test set.
-
-## 🧩 The Challenge
-You are provided with a network of entities (nodes).
-*   **Input:** Noisy feature vectors ($X$) and an Adjacency Matrix ($A$).
-*   **Task:** Predict the class label ($Y$) for the unlabeled test nodes.
-*   **Difficulty:** Features are purposely noisy ($\sigma=10.0$). Relying solely on features will result in poor performance (~40% F1). You **must** use the edges!
-
----
-
-## 💾 Dataset
-The dataset is generated via a **Stochastic Block Model (SBM)** with high homophily.
-
-| File | Description |
+| File | Contents |
 | :--- | :--- |
-| `data/train.csv` | **Features + Labels**. Use this to train your model. |
-| `data/edges.csv` | **Graph Structure**. Contains source and destination node IDs. |
-| `data/test.csv` | **Features Only**. You must predict labels for these nodes. |
+| [data/train.csv](data/train.csv) | Labeled training nodes and features |
+| [data/test.csv](data/test.csv) | Test node IDs and features |
+| [data/edges.csv](data/edges.csv) | Edges across the full graph |
+| [starter_code/baseline.py](starter_code/baseline.py) | Random Forest baseline |
+| [starter_code/baseline_gnn.py](starter_code/baseline_gnn.py) | Two-layer GCN baseline |
 
-> **⚠️ Warning:** Do NOT run `data/generate_data.py`. This uses a local default seed (42) which is DIFFERENT from the secret server seed used for scoring. If you overwrite your data, use `git checkout data/` to restore it.
+The starter GCN uses a transductive setup: it sees all node features and graph edges, while training uses only the designated training labels. Its validation nodes come from the labeled training set.
 
----
+## Run a baseline
 
-## 🏆 Leaderboard
-Check the **[Live Visual Leaderboard](leaderboard.html)** for the most up-to-date rankings with fancy visuals! 🎨
-
-Or see the text version in [LEADERBOARD.md](LEADERBOARD.md).
-
-| Rank | Model | Author | Macro F1 | Date |
-| :--- | :--- | :--- | :--- | :--- |
-| 🥇 | **GNN Baseline** | Starter Code | **0.902** | 2026-01-01 |
-| 🥈 | Random Forest | Baseline | 0.415 | 2026-01-01 |
-
-*(The leaderboard updates automatically when a Pull Request is merged!)*
-
----
-
-## 🚀 Getting Started
-
-### 1. Clone & Setup
 ```bash
-# Clone your fork
-git clone https://github.com/YOUR_USERNAME/gnn-mini-comp.git
+git clone https://github.com/MostafaAbdelmegeed/gnn-mini-comp.git
 cd gnn-mini-comp
-
-# Create virtual environment
-python -m venv venv
-source venv/bin/activate  # or .\venv\Scripts\activate on Windows
-
-# Install dependencies
-pip install -r starter_code/requirements.txt
+python -m venv .venv
 ```
 
-### 2. Run Baselines
-We provide two starter scripts in `starter_code/`:
-*   **`baseline.py`**: A simple Random Forest (no graph). Fast but weak.
-*   **`baseline_gnn.py`**: A Graph Convolutional Network (GCN) using PyTorch Geometric. **Start here!**
+Activate with `.venv\Scripts\Activate.ps1` in PowerShell or `source .venv/bin/activate` on macOS/Linux. Then:
 
 ```bash
+python -m pip install -r starter_code/requirements.txt
 cd starter_code
+python baseline.py
 python baseline_gnn.py
-# Output: submissions/gnn_submission.csv
 ```
 
----
+Run the scripts from `starter_code/` because their input paths are relative to that directory. They write predictions into the repository's `submissions/` directory.
 
-## 📤 Submission Guide
+## Submit predictions
 
-We use **GitHub Actions** for automated scoring. Follow this workflow:
+Fork the repository and commit a CSV such as `submissions/YourName_ModelName.csv`:
 
-1.  **Fork** this repository.
-2.  **Create a Branch**: `git checkout -b submission/my-new-model`
-3.  **Generate Prediction**: Save your CSV to `submissions/`.
-    *   **Format**: Must have `id` and `target` columns.
-    *   **Naming**: `submissions/YourName_ModelName.csv`
-4.  **Push & PR**:
-    ```bash
-    git add submissions/YourName_ModelName.csv
-    git commit -m "New submission by YourName"
-    git push origin submission/my-new-model
-    ```
-5.  **View Score**: Open a **Pull Request** to the `main` branch.
-    *   🤖 The **GitHub Bot** will run your model against the hidden ground truth.
-    *   Check the **PR Comments** to see your Macro F1 Score!
+```csv
+id,target
+2,0
+7,1
+```
 
----
+Include every published test ID exactly once. Predictions must use the same class labels as the training data. Open a pull request containing your CSV to trigger the scoring workflow.
 
-## 📜 Rules
-1.  **No Cheating:** Do not try to reverse-engineer the seed.
-2.  **Open Source:** All submissions must be committed to the repo.
-3.  **Creativity:** You can use any library (PyG, DGL, NetworkX) or method (Link Prediction, Node Classification).
+The scoring script sorts IDs, checks them against the test labels, and computes **macro F1**. Hosted scoring depends on the maintainer's `GNN_CHALLENGE_SEED` configuration. See the [workflow](.github/workflows/gnn_scoring.yml) for its regeneration and submission paths.
 
-**Happy Modeling! 🧪**
+## Recorded results
+
+[LEADERBOARD.md](LEADERBOARD.md) contains the recorded scores and dates. The [visual leaderboard](leaderboard.html) is a standalone HTML page; download it and open it in a browser to view it. The README keeps the results in those files rather than maintaining a second score table.
+
+## Local experiments
+
+Keep the checked-in data intact when preparing a challenge submission. `data/generate_data.py` writes new training data, test data, edges, and local ground truth into `data/`. Its default seed is 42; a regenerated dataset may differ from the published challenge.
+
+To explore the generator, use a separate checkout. The included `verify_challenge.ps1` is an experiment script that regenerates data before running baselines; it is not a read-only verification of the published files.
+
+## Scope
+
+This is an educational synthetic dataset, rather than a benchmark for claims about real-world graph performance. Its public generation procedure and node ordering are part of that limitation. Report validation settings and keep test-label reconstruction out of model comparisons.
